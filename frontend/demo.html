@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareCall - Voice Assistant for Elderly Care</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .voice-demo {
+            grid-column: 1 / -1;
+        }
+
+        .voice-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .test-command {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .test-command:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .test-command button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .test-command button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .output {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .output-line {
+            margin: 5px 0;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .user-input {
+            color: #0066cc;
+            font-weight: bold;
+        }
+
+        .system-response {
+            color: #28a745;
+        }
+
+        .emergency {
+            color: #dc3545;
+            font-weight: bold;
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        .thinking {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .status-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .status-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .status-item .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+            margin-top: 10px;
+        }
+
+        .status-item .label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .medication-list {
+            margin-top: 20px;
+        }
+
+        .med-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .med-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .med-item.clickable {
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .med-item.clickable:hover {
+            background: #d4edda;
+            border-color: #28a745;
+            transform: translateX(10px) scale(1.02);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .med-item.taken {
+            opacity: 0.7;
+        }
+
+        .med-item .med-name {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .med-item .med-time {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .badge {
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+        }
+
+        .badge.overdue {
+            background: #dc3545;
+        }
+
+        h2 {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .emergency-panel {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .emergency-panel.active {
+            background: #f8d7da;
+            border-color: #dc3545;
+            animation: emergencyPulse 1s ease-in-out infinite;
+        }
+
+        .contact-list {
+            margin-top: 15px;
+        }
+
+        .contact-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+        }
+
+        .contact-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .big-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-size: 1.2em;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .big-button:hover {
+            background: #218838;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(40, 167, 69, 0.3);
+        }
+
+        .big-button.emergency-button {
+            background: #dc3545;
+        }
+
+        .big-button.emergency-button:hover {
+            background: #c82333;
+        }
+
+        /* Confetti styles */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f0f;
+            position: absolute;
+            animation: confetti-fall 3s linear forwards;
+            z-index: 9999;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes emergencyPulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 20px 10px rgba(220, 53, 69, 0);
+            }
+        }
+
+        .live-clock {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .feature-badge {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.7em;
+            margin-left: 10px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .controls-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .control-button {
+            flex: 1;
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .control-button:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .control-button.active {
+            background: #28a745;
+        }
+
+        /* === NEW FEATURES: Visual Polish + Professional Pack === */
+
+        /* 1. Voice Waveform Visualization */
+        .waveform-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 40px;
+            margin: 15px 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .waveform-container.active {
+            opacity: 1;
+        }
+
+        .waveform-bar {
+            width: 4px;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            border-radius: 2px;
+            animation: waveform 0.6s ease-in-out infinite;
+        }
+
+        .waveform-bar:nth-child(1) { animation-delay: 0s; }
+        .waveform-bar:nth-child(2) { animation-delay: 0.1s; }
+        .waveform-bar:nth-child(3) { animation-delay: 0.2s; }
+        .waveform-bar:nth-child(4) { animation-delay: 0.3s; }
+        .waveform-bar:nth-child(5) { animation-delay: 0.2s; }
+        .waveform-bar:nth-child(6) { animation-delay: 0.1s; }
+        .waveform-bar:nth-child(7) { animation-delay: 0s; }
+
+        @keyframes waveform {
+            0%, 100% { height: 5px; }
+            50% { height: 30px; }
+        }
+
+        /* 2. Progress Ring for Adherence */
+        .progress-ring-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s ease;
+            stroke: #667eea;
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: #e9ecef;
+            stroke-width: 8;
+        }
+
+        .progress-ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* 3. Typing Indicator */
+        .typing-indicator {
+            display: none;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 10px 0;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #6c757d;
+            border-radius: 50%;
+            animation: typingDot 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingDot {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        /* 4. Dark Mode Styles */
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        .dark-mode .card {
+            background: #2a2a3e;
+            color: #e0e0e0;
+        }
+
+        .dark-mode h2 {
+            color: #e0e0e0;
+        }
+
+        .dark-mode .output {
+            background: #1e1e2e;
+            color: #e0e0e0;
+            border-left-color: #667eea;
+        }
+
+        .dark-mode .test-command {
+            background: #1e1e2e;
+        }
+
+        .dark-mode .test-command:hover {
+            background: #2a2a3e;
+        }
+
+        .dark-mode .med-item {
+            background: #1e1e2e;
+        }
+
+        .dark-mode .med-item:hover {
+            background: #2a2a3e;
+        }
+
+        .dark-mode .status-item {
+            background: #1e1e2e;
+        }
+
+        .dark-mode .emergency-panel {
+            background: #2a2a1e;
+        }
+
+        .dark-mode .emergency-panel.active {
+            background: #3e2a2a;
+        }
+
+        .dark-mode .controls-panel {
+            background: #1e1e2e;
+        }
+
+        .dark-mode .contact-item {
+            background: #1e1e2e;
+            color: #e0e0e0;
+        }
+
+        .dark-mode .med-name {
+            color: #e0e0e0 !important;
+        }
+
+        .dark-mode .med-time {
+            color: #a0a0a0 !important;
+        }
+
+        /* 5. Keyboard Shortcut Hints */
+        .shortcut-hint {
+            display: inline-block;
+            background: #6c757d;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7em;
+            margin-left: 5px;
+            font-family: monospace;
+        }
+
+        /* 6. Enhanced Animations */
+        .glow {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 5px rgba(102, 126, 234, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);
+            }
+        }
+
+        .shimmer {
+            background: linear-gradient(90deg,
+                rgba(255,255,255,0) 0%,
+                rgba(255,255,255,0.3) 50%,
+                rgba(255,255,255,0) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .bounce-in {
+            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🩺 CareCall</h1>
+            <p>Voice Assistant for Elderly Care - DeveloperWeek 2026</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Voice Demo -->
+            <div class="card voice-demo">
+                <h2>🎤 Interactive Voice Demo <span class="feature-badge">LIVE</span></h2>
+
+                <div class="live-clock" id="live-clock">🕐 Loading...</div>
+
+                <p style="color: #6c757d; margin-bottom: 20px;">
+                    Click any command below to simulate voice input. Watch CareCall respond in real-time with VOICE and SOUND! 🔊
+                </p>
+
+                <div class="controls-panel">
+                    <div class="control-row">
+                        <button class="control-button active" id="voice-toggle" onclick="toggleVoice()">
+                            🔊 Voice: ON
+                        </button>
+                        <button class="control-button active" id="sound-toggle" onclick="toggleSound()">
+                            🎵 Sound: ON
+                        </button>
+                        <button class="control-button" id="dark-mode-toggle" onclick="toggleDarkMode()">
+                            🌙 Dark Mode
+                        </button>
+                    </div>
+
+                    <!-- Voice Waveform Visualization -->
+                    <div class="waveform-container" id="waveform">
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                    </div>
+
+                    <!-- Typing Indicator -->
+                    <div class="typing-indicator" id="typing-indicator">
+                        <span>🤖 CareCall is typing</span>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+
+                    <p style="color: #6c757d; font-size: 0.85em; margin-top: 10px; text-align: center;">
+                        ⌨️ Keyboard shortcuts: <span class="shortcut-hint">SPACE</span> Take medicine
+                        <span class="shortcut-hint">E</span> Emergency
+                        <span class="shortcut-hint">R</span> Reset
+                    </p>
+                </div>
+
+                <div class="voice-controls">
+                    <div class="test-command">
+                        <span>💬 "Hey CareCall, good morning!"</span>
+                        <button onclick="sendCommand('Hey CareCall, good morning!')">Try It</button>
+                    </div>
+
+                    <div class="test-command">
+                        <span>⏰ "What time is it?"</span>
+                        <button onclick="sendCommand('What time is it?')">Try It</button>
+                    </div>
+
+                    <div class="test-command">
+                        <span>📅 "What day is today?"</span>
+                        <button onclick="sendCommand('What day is today?')">Try It</button>
+                    </div>
+
+                    <div class="test-command">
+                        <span>🌤️ "What's the weather?"</span>
+                        <button onclick="sendCommand('What is the weather?')">Try It</button>
+                    </div>
+
+                    <div class="test-command">
+                        <span>💊 "Did I take my medicine?"</span>
+                        <button onclick="sendCommand('Did I take my medicine?')">Try It</button>
+                    </div>
+
+                    <div class="test-command">
+                        <span>💊 "I just took my blood pressure pill"</span>
+                        <button onclick="sendCommand('I just took my blood pressure pill')">Try It</button>
+                    </div>
+
+                    <div class="test-command">
+                        <span>📞 "Call my daughter Sarah"</span>
+                        <button onclick="sendCommand('Call my daughter Sarah')">Try It</button>
+                    </div>
+
+                    <div class="test-command">
+                        <span>📞 "Call Doctor Johnson"</span>
+                        <button onclick="sendCommand('Call Doctor Johnson')">Try It</button>
+                    </div>
+
+                    <div class="test-command">
+                        <span>🩺 "How do I feel today?"</span>
+                        <button onclick="sendCommand('How do I feel today?')">Try It</button>
+                    </div>
+
+                    <div class="test-command">
+                        <span>💭 "Tell me a joke"</span>
+                        <button onclick="sendCommand('Tell me a joke')">Try It</button>
+                    </div>
+                </div>
+
+                <button class="big-button emergency-button" onclick="sendCommand('Help! I fell in the bathroom!')">
+                    🚨 SIMULATE EMERGENCY: "Help! I fell!"
+                </button>
+
+                <div class="output" id="output">
+                    <div class="output-line" style="color: #6c757d;">
+                        👆 Click any command above to start the demo...
+                    </div>
+                </div>
+
+                <button class="big-button" onclick="clearOutput()">
+                    🔄 Reset Demo
+                </button>
+            </div>
+
+            <!-- System Status -->
+            <div class="card">
+                <h2>📊 System Status</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="label">User</div>
+                        <div class="value" style="font-size: 1.5em;">Margaret</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">Listening</div>
+                        <div class="value" id="listening-status">✅</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">Medications Due</div>
+                        <div class="value" id="meds-due">2</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">Adherence Rate</div>
+                        <div class="progress-ring-container">
+                            <svg class="progress-ring" width="120" height="120">
+                                <circle class="progress-ring-bg" cx="60" cy="60" r="52"></circle>
+                                <circle class="progress-ring-circle" cx="60" cy="60" r="52"
+                                    stroke-dasharray="326.73" stroke-dashoffset="46.68" id="progress-circle"></circle>
+                            </svg>
+                            <div class="progress-ring-text" id="adherence">85.7%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="emergency-panel" id="emergency-panel">
+                    <strong>🟢 No Active Emergencies</strong>
+                    <p style="margin-top: 10px; color: #6c757d;">System monitoring for safety</p>
+                </div>
+            </div>
+
+            <!-- Medications -->
+            <div class="card">
+                <h2>💊 Today's Medications</h2>
+                <p style="color: #6c757d; font-size: 0.9em; margin-bottom: 15px;">
+                    💡 Click any medication to mark it as taken!
+                </p>
+                <div class="medication-list">
+                    <div class="med-item taken" id="med-1">
+                        <div>
+                            <div class="med-name">Lisinopril 10mg</div>
+                            <div class="med-time">🕐 8:00 AM</div>
+                        </div>
+                        <span class="badge">Taken</span>
+                    </div>
+                    <div class="med-item taken" id="med-2">
+                        <div>
+                            <div class="med-name">Warfarin 5mg</div>
+                            <div class="med-time">🕘 9:00 AM</div>
+                        </div>
+                        <span class="badge">Taken</span>
+                    </div>
+                    <div class="med-item clickable" id="med-3" onclick="takeMedication('med-3', 'Vitamin D 1000 IU')">
+                        <div>
+                            <div class="med-name">Vitamin D 1000 IU</div>
+                            <div class="med-time">🕣 8:30 AM</div>
+                        </div>
+                        <span class="badge overdue">Missed ← Click me!</span>
+                    </div>
+                    <div class="med-item clickable" id="med-4" onclick="takeMedication('med-4', 'Warfarin 5mg (Evening)')">
+                        <div>
+                            <div class="med-name">Warfarin 5mg (Evening)</div>
+                            <div class="med-time">🕘 9:00 PM</div>
+                        </div>
+                        <span class="badge" style="background: #6c757d;">Upcoming ← Click me!</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Contacts -->
+            <div class="card">
+                <h2>📞 Emergency Contacts</h2>
+                <div class="contact-list">
+                    <div class="contact-item">
+                        <div>
+                            <strong>Sarah (Daughter)</strong>
+                            <div style="color: #6c757d; font-size: 0.9em;">+1-555-0123</div>
+                        </div>
+                        <span class="badge">Primary</span>
+                    </div>
+                    <div class="contact-item">
+                        <div>
+                            <strong>Dr. Johnson</strong>
+                            <div style="color: #6c757d; font-size: 0.9em;">+1-555-0456</div>
+                        </div>
+                        <span class="badge">Primary</span>
+                    </div>
+                    <div class="contact-item">
+                        <div>
+                            <strong>Robert (Son)</strong>
+                            <div style="color: #6c757d; font-size: 0.9em;">+1-555-0789</div>
+                        </div>
+                        <span class="badge" style="background: #6c757d;">Secondary</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; color: white; margin-top: 40px;">
+            <p>Built with ❤️ for elderly people everywhere</p>
+            <p style="margin-top: 10px; opacity: 0.8;">Powered by Deepgram Voice AI • DeveloperWeek 2026 Hackathon</p>
+        </div>
+    </div>
+
+    <script>
+        let commandCount = 0;
+        let emergencyActive = false;
+        let voiceEnabled = true;
+        let soundEnabled = true;
+        let medicationsDue = 2; // Vitamin D (missed) + Evening Warfarin (upcoming)
+
+        // Initialize Web Speech API
+        const synth = window.speechSynthesis;
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Sound effects
+        function playSound(type) {
+            if (!soundEnabled) return;
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            switch(type) {
+                case 'success':
+                    oscillator.frequency.value = 800;
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                    break;
+                case 'emergency':
+                    // Emergency siren
+                    for (let i = 0; i < 3; i++) {
+                        setTimeout(() => {
+                            const osc = audioContext.createOscillator();
+                            const gain = audioContext.createGain();
+                            osc.connect(gain);
+                            gain.connect(audioContext.destination);
+                            osc.frequency.value = 1000;
+                            gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                            osc.start(audioContext.currentTime);
+                            osc.stop(audioContext.currentTime + 0.2);
+                        }, i * 300);
+                    }
+                    break;
+                case 'call':
+                    oscillator.frequency.value = 440;
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 1);
+                    break;
+            }
+        }
+
+        // Voice synthesis
+        function speak(text) {
+            if (!voiceEnabled || !synth) return;
+
+            synth.cancel(); // Cancel any ongoing speech
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            utterance.volume = 0.8;
+
+            // Show waveform while speaking
+            const waveform = document.getElementById('waveform');
+            waveform.classList.add('active');
+
+            utterance.onend = () => {
+                waveform.classList.remove('active');
+            };
+
+            synth.speak(utterance);
+        }
+
+        // Live clock
+        function updateClock() {
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('live-clock').textContent = now.toLocaleDateString('en-US', options);
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Confetti celebration
+        function celebrate() {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.style.position = 'fixed';
+                    confetti.style.left = Math.random() * window.innerWidth + 'px';
+                    confetti.style.top = '-10px';
+                    confetti.style.width = '10px';
+                    confetti.style.height = '10px';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animation = 'confetti-fall 3s linear forwards';
+                    confetti.style.zIndex = '9999';
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 50);
+            }
+        }
+
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            const btn = document.getElementById('voice-toggle');
+            btn.textContent = voiceEnabled ? '🔊 Voice: ON' : '🔇 Voice: OFF';
+            btn.className = voiceEnabled ? 'control-button active' : 'control-button';
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('sound-toggle');
+            btn.textContent = soundEnabled ? '🎵 Sound: ON' : '🔇 Sound: OFF';
+            btn.className = soundEnabled ? 'control-button active' : 'control-button';
+        }
+
+        // === NEW FEATURES FUNCTIONS ===
+
+        // Dark Mode Toggle
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const btn = document.getElementById('dark-mode-toggle');
+            const isDark = document.body.classList.contains('dark-mode');
+            btn.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+            btn.className = isDark ? 'control-button active' : 'control-button';
+        }
+
+        // Progress Ring Update
+        function updateProgressRing(percentage) {
+            const circle = document.getElementById('progress-circle');
+            const circumference = 2 * Math.PI * 52; // radius is 52
+            const offset = circumference - (percentage / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+        }
+
+        // Typing Indicator
+        function showTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            indicator.classList.add('active');
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            indicator.classList.remove('active');
+        }
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ignore if user is typing in an input field
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            switch(e.key.toLowerCase()) {
+                case ' ': // Spacebar - Take medicine
+                    e.preventDefault();
+                    sendCommand('I just took my medicine');
+                    break;
+                case 'e': // E - Emergency
+                    e.preventDefault();
+                    sendCommand('Help! I fell in the bathroom!');
+                    break;
+                case 'r': // R - Reset
+                    e.preventDefault();
+                    clearOutput();
+                    break;
+            }
+        });
+
+        function addOutput(text, type = 'system') {
+            const output = document.getElementById('output');
+            const line = document.createElement('div');
+            line.className = `output-line ${type}`;
+
+            const timestamp = new Date().toLocaleTimeString();
+            line.textContent = `[${timestamp}] ${text}`;
+
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function showThinking() {
+            addOutput('💭 CareCall is thinking...', 'thinking');
+        }
+
+        function sendCommand(command) {
+            commandCount++;
+
+            // User input
+            addOutput(`👤 User: "${command}"`, 'user-input');
+
+            // Show thinking animation AND typing indicator
+            showThinking();
+            showTypingIndicator();
+
+            // Simulate processing delay
+            setTimeout(() => {
+                hideTypingIndicator();
+                handleCommand(command);
+            }, 800);
+        }
+
+        function handleCommand(command) {
+            const lower = command.toLowerCase();
+            let response = '';
+
+            // Emergency detection
+            if (lower.includes('help') || lower.includes('fell') || lower.includes('fall')) {
+                playSound('emergency');
+                addOutput('🚨 EMERGENCY DETECTED!', 'emergency');
+                response = "I've detected an emergency and I'm alerting your contacts right now. Help is on the way!";
+                addOutput(`🤖 CareCall: "${response}"`, 'system-response');
+                speak(response);
+                addOutput('📱 Alert sent to Sarah (+1-555-0123)', 'emergency');
+                addOutput('📱 Alert sent to Dr. Johnson (+1-555-0456)', 'emergency');
+
+                // Update emergency panel
+                const panel = document.getElementById('emergency-panel');
+                panel.className = 'emergency-panel active';
+                panel.innerHTML = '<strong>🚨 ACTIVE EMERGENCY</strong><p style="margin-top: 10px;">Fall detected • Contacts notified</p>';
+                emergencyActive = true;
+
+                // Update status
+                document.getElementById('listening-status').textContent = '🚨';
+                return;
+            }
+
+            // Time
+            else if (lower.includes('time')) {
+                const time = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                response = `It's ${time}`;
+                addOutput(`🤖 CareCall: "${response}"`, 'system-response');
+                speak(response);
+                playSound('success');
+            }
+
+            // Day/Date
+            else if (lower.includes('day') || lower.includes('date')) {
+                const date = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                response = `Today is ${date}`;
+                addOutput(`🤖 CareCall: "${response}"`, 'system-response');
+                speak(response);
+                playSound('success');
+            }
+
+            // Weather
+            else if (lower.includes('weather')) {
+                response = "It's 68 degrees and sunny today. Great weather for a walk!";
+                addOutput(`🤖 CareCall: "${response}"`, 'system-response');
+                speak(response);
+                playSound('success');
+            }
+
+            // Medicine
+            else if (lower.includes('medicine') || lower.includes('pill')) {
+                if (lower.includes('take') || lower.includes('took')) {
+                    playSound('success');
+                    response = "Great! I've logged your medication. Well done staying on schedule!";
+                    addOutput(`🤖 CareCall: "${response}"`, 'system-response');
+                    speak(response);
+
+                    // Update adherence
+                    const current = parseFloat(document.getElementById('adherence').textContent);
+                    const newAdherence = Math.min(current + 2.1, 100);
+                    document.getElementById('adherence').textContent = newAdherence.toFixed(1) + '%';
+                    updateProgressRing(newAdherence);
+
+                    // Update medications due
+                    if (medicationsDue > 0) {
+                        medicationsDue--;
+                        document.getElementById('meds-due').textContent = medicationsDue;
+                    }
+
+                    // Celebrate 100% adherence!
+                    if (newAdherence >= 100) {
+                        setTimeout(() => {
+                            celebrate();
+                            addOutput('🎉 CONGRATULATIONS! 100% Medication Adherence!', 'system-response');
+                            speak('Congratulations! You have achieved perfect medication adherence!');
+                        }, 1000);
+                    }
+                } else {
+                    if (medicationsDue > 0) {
+                        response = `You have ${medicationsDue} medication${medicationsDue > 1 ? 's' : ''} due. Your Vitamin D is waiting!`;
+                    } else {
+                        response = "You're all caught up! No medications due right now.";
+                    }
+                    addOutput(`🤖 CareCall: "${response}"`, 'system-response');
+                    speak(response);
+                }
+            }
+
+            // Call (but not if it's just "CareCall" greeting)
+            else if (lower.includes('call') && !lower.includes('carecall')) {
+                playSound('call');
+                const name = lower.includes('sarah') ? 'Sarah' : lower.includes('doctor') ? 'Dr. Johnson' : 'your contact';
+                response = `Calling ${name} now...`;
+                addOutput(`🤖 CareCall: "${response}"`, 'system-response');
+                speak(response);
+                addOutput(`📞 Initiating call to ${name}`, 'system');
+            }
+
+            // Joke
+            else if (lower.includes('joke')) {
+                const jokes = [
+                    "Why don't scientists trust atoms? Because they make up everything!",
+                    "What do you call a bear with no teeth? A gummy bear!",
+                    "Why did the scarecrow win an award? He was outstanding in his field!",
+                    "What do you call a fake noodle? An impasta!"
+                ];
+                response = jokes[Math.floor(Math.random() * jokes.length)];
+                addOutput(`🤖 CareCall: "${response}"`, 'system-response');
+                speak(response);
+                playSound('success');
+            }
+
+            // Greeting
+            else if (lower.includes('morning') || lower.includes('hello') || lower.includes('hey')) {
+                response = "Good morning! How are you feeling today?";
+                addOutput(`🤖 CareCall: "${response}"`, 'system-response');
+                speak(response);
+                playSound('success');
+            }
+
+            // General question
+            else {
+                response = "I'm here to help! You can ask about medications, make calls, or just chat with me.";
+                addOutput(`🤖 CareCall: "${response}"`, 'system-response');
+                speak(response);
+            }
+        }
+
+        function takeMedication(medId, medName) {
+            const medItem = document.getElementById(medId);
+            const badge = medItem.querySelector('.badge');
+
+            // Check if already taken
+            if (medItem.classList.contains('taken')) {
+                return; // Already taken, do nothing
+            }
+
+            // Play sound and speak
+            playSound('success');
+            const response = `Great job! I've marked your ${medName} as taken. Well done staying on schedule!`;
+            speak(response);
+
+            // Add to output log
+            addOutput(`💊 Medication taken: ${medName}`, 'system-response');
+            addOutput(`🤖 CareCall: "${response}"`, 'system-response');
+
+            // Update the UI
+            badge.textContent = 'Taken ✓';
+            badge.className = 'badge';
+            medItem.classList.remove('clickable', 'overdue');
+            medItem.classList.add('taken');
+            medItem.onclick = null;
+
+            // Update adherence rate
+            const current = parseFloat(document.getElementById('adherence').textContent);
+            const newAdherence = Math.min(current + 2.1, 100);
+            document.getElementById('adherence').textContent = newAdherence.toFixed(1) + '%';
+            updateProgressRing(newAdherence);
+
+            // Update medications due
+            if (medicationsDue > 0) {
+                medicationsDue--;
+                document.getElementById('meds-due').textContent = medicationsDue;
+            }
+
+            // Celebrate 100% adherence!
+            if (newAdherence >= 100) {
+                setTimeout(() => {
+                    celebrate();
+                    addOutput('🎉 CONGRATULATIONS! 100% Medication Adherence!', 'system-response');
+                    speak('Congratulations! You have achieved perfect medication adherence!');
+                }, 1000);
+            }
+        }
+
+        function clearOutput() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<div class="output-line" style="color: #6c757d;">👆 Click any command above to start the demo...</div>';
+            commandCount = 0;
+
+            // Reset emergency
+            if (emergencyActive) {
+                const panel = document.getElementById('emergency-panel');
+                panel.className = 'emergency-panel';
+                panel.innerHTML = '<strong>🟢 No Active Emergencies</strong><p style="margin-top: 10px; color: #6c757d;">System monitoring for safety</p>';
+                emergencyActive = false;
+                document.getElementById('listening-status').textContent = '✅';
+            }
+
+            // Reset adherence rate and medications due
+            document.getElementById('adherence').textContent = '85.7%';
+            updateProgressRing(85.7);
+            medicationsDue = 2; // Changed from 1 to 2 since we now have 2 clickable meds
+            document.getElementById('meds-due').textContent = medicationsDue;
+
+            // Reset medications
+            const med3 = document.getElementById('med-3');
+            const med4 = document.getElementById('med-4');
+
+            if (med3) {
+                med3.className = 'med-item clickable';
+                med3.onclick = () => takeMedication('med-3', 'Vitamin D 1000 IU');
+                const badge3 = med3.querySelector('.badge');
+                badge3.className = 'badge overdue';
+                badge3.textContent = 'Missed ← Click me!';
+            }
+
+            if (med4) {
+                med4.className = 'med-item clickable';
+                med4.onclick = () => takeMedication('med-4', 'Warfarin 5mg (Evening)');
+                const badge4 = med4.querySelector('.badge');
+                badge4.className = 'badge';
+                badge4.style.background = '#6c757d';
+                badge4.textContent = 'Upcoming ← Click me!';
+            }
+
+            // Cancel any speech
+            if (synth) synth.cancel();
+        }
+
+        // Auto-scroll output
+        const output = document.getElementById('output');
+        const observer = new MutationObserver(() => {
+            output.scrollTop = output.scrollHeight;
+        });
+        observer.observe(output, { childList: true });
+
+        // Initialize progress ring on page load
+        updateProgressRing(85.7);
+    </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# Core Framework (updated for Python 3.14 compatibility)
+fastapi==0.115.0
+uvicorn[standard]==0.32.1
+python-dotenv==1.0.1
+
+# Deepgram SDK
+deepgram-sdk==3.7.3
+
+# Database (optional for MVP)
+# sqlalchemy==2.0.36
+# alembic==1.14.0
+
+# Twilio (optional for phone calls)
+# twilio==9.3.7
+
+# OpenAI (for conversation)
+openai==1.58.1
+
+# WebSockets
+websockets==14.1
+
+# Utilities
+python-multipart==0.0.19
+httpx==0.28.1
+
+# Note: Using latest versions for Python 3.14 compatibility
+# Some features commented out for faster MVP setup

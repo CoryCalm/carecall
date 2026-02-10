@@ -1,0 +1,19 @@
+# Minimal requirements for quick MVP testing
+# Use this if you have issues with the full requirements.txt
+
+# Core Framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-dotenv>=1.0.0
+
+# Deepgram SDK
+deepgram-sdk>=3.7.0
+
+# OpenAI
+openai>=1.50.0
+
+# WebSockets
+websockets>=14.0
+
+# Utilities
+httpx>=0.28.0
